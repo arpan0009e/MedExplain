@@ -8,6 +8,9 @@ class Settings(BaseSettings):
     app_version: str = "0.1.0"
     environment: str = "development"
 
+    mongodb_uri: str
+    mongodb_database: str = "medexplain"
+
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
