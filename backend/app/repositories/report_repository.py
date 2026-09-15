@@ -10,10 +10,7 @@ class ReportRepository:
 
     collection = database["reports"]
 
-    async def create(
-        self,
-        filename: str,
-    ) -> dict:
+    async def create(self, filename: str) -> dict:
         """Create a new report document."""
 
         document = {
@@ -27,3 +24,13 @@ class ReportRepository:
         document["_id"] = result.inserted_id
 
         return document
+
+    async def get_by_id(self, report_id: str) -> dict | None:
+        """Find a report by its MongoDB ObjectId."""
+
+        if not ObjectId.is_valid(report_id):
+            return None
+
+        return await self.collection.find_one(
+            {"_id": ObjectId(report_id)}
+        )
