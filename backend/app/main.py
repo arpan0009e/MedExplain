@@ -1,9 +1,12 @@
 from fastapi import FastAPI
 
+from app.core.config import settings
+
+
 app = FastAPI(
-    title="MedExplain API",
+    title=settings.app_name,
     description="Backend API for the MedExplain medical report explanation platform.",
-    version="0.1.0",
+    version=settings.app_version,
 )
 
 
