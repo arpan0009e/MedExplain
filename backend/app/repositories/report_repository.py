@@ -2,13 +2,17 @@ from datetime import datetime, timezone
 
 from bson import ObjectId
 
-from app.core.database import database
+from app.core.database import get_database
 
 
 class ReportRepository:
     """Database operations for medical reports."""
 
-    collection = database["reports"]
+    @property
+    def collection(self):
+        """Return the reports collection from the active database."""
+
+        return get_database()["reports"]
 
     async def create(self, filename: str) -> dict:
         """Create a new report document."""

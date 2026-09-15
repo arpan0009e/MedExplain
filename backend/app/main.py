@@ -4,7 +4,7 @@ from fastapi import FastAPI
 
 from app.api.v1.router import api_router
 from app.core.config import settings
-from app.core.database import client, initialize_database
+from app.core.database import close_database, initialize_database
 
 
 @asynccontextmanager
@@ -15,7 +15,7 @@ async def lifespan(app: FastAPI):
 
     yield
 
-    await client.close()
+    await close_database()
 
 
 app = FastAPI(
