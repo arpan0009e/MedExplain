@@ -17,8 +17,11 @@ database = client[settings.mongodb_database]
 
 
 async def initialize_database() -> None:
-    """Create required database indexes."""
+    """Initialize database indexes and verify connectivity."""
+
+    await database.command("ping")
 
     await database.reports.create_index(
-        [("status", 1), ("created_at", -1)]
+        [("status", 1), ("created_at", -1)],
+        name="status_created_at_idx",
     )
