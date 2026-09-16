@@ -5,7 +5,7 @@
    Configuration
    ========================= */
 
-const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
+// const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
 
 
 /* =========================
@@ -75,7 +75,7 @@ uploadForm.addEventListener("submit", async (event) => {
 
     try {
         const response = await fetch(
-            `${API_BASE_URL}/reports`,
+            `${MEDEXPLAIN_CONFIG.API_BASE_URL}/reports`,
             {
                 method: "POST",
                 headers: {
