@@ -18,3 +18,11 @@ class ReportResponse(BaseModel):
     report_id: str
     filename: str
     status: str
+
+
+class ReportUploadResponse(BaseModel):
+    """Response schema for PDF report upload and text extraction."""
+
+    filename: str
+    page_count: int
+    text: str

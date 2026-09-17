@@ -1,7 +1,13 @@
-from fastapi import APIRouter, status
+from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
+from app.ingestion.pdf_extractor import extract_text_from_pdf
+from app.ingestion.text_cleaner import clean_text
 from app.repositories.report_repository import ReportRepository
-from app.schemas.report import ReportCreate, ReportResponse
+from app.schemas.report import (
+    ReportCreate,
+    ReportResponse,
+    ReportUploadResponse,
+)
 from app.services.report_service import ReportService
 
 
@@ -25,6 +31,61 @@ async def create_report(
     """Create a new medical report record."""
 
     return await report_service.create_report(report)
+
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
+
+
+@router.post(
+    "/upload",
+    response_model=ReportUploadResponse,
+)
+async def upload_report(
+    file: UploadFile = File(...),
+) -> ReportUploadResponse:
+    """Upload a PDF medical report and extract its text."""
+
+    if file.content_type != "application/pdf":
+        raise HTTPException(
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
+            detail="Only PDF files are supported.",
+        )
+
+    file_content = await file.read(MAX_PDF_SIZE + 1)
+
+    if len(file_content) > MAX_PDF_SIZE:
+        raise HTTPException(
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            detail="PDF file size must not exceed 10 MB.",
+        )
+
+    # Verify that the file actually has a PDF signature.
+    if not file_content.startswith(b"%PDF-"):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="The uploaded file is not a valid PDF.",
+        )
+
+    try:
+        extracted_text, page_count = extract_text_from_pdf(file_content)
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    cleaned_text = clean_text(extracted_text)
+
+    if not cleaned_text:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="The PDF contains no extractable text.",
+        )
+
+    return ReportUploadResponse(
+        filename=file.filename or "unknown.pdf",
+        page_count=page_count,
+        text=cleaned_text,
+    )
 
 
 @router.get(
