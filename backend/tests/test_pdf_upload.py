@@ -1,0 +1,52 @@
+from pathlib import Path
+
+import pytest
+from httpx import AsyncClient
+
+
+SAMPLE_PDF = Path(__file__).parent / "sample_medical_report.pdf"
+
+
+@pytest.mark.asyncio
+async def test_upload_pdf(client: AsyncClient) -> None:
+    """Uploading a valid PDF should extract and return its text."""
+
+    with SAMPLE_PDF.open("rb") as pdf_file:
+        response = await client.post(
+            "/api/v1/reports/upload",
+            files={
+                "file": (
+                    "sample_medical_report.pdf",
+                    pdf_file,
+                    "application/pdf",
+                )
+            },
+        )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["filename"] == "sample_medical_report.pdf"
+    assert data["page_count"] == 1
+    assert "Hemoglobin: 13.5 g/dL" in data["text"]
+    assert "White Blood Cell Count: 7200 /uL" in data["text"]
+    assert "Platelets: 250000 /uL" in data["text"]
+
+@pytest.mark.asyncio
+async def test_upload_non_pdf_file(client: AsyncClient) -> None:
+    """Uploading a non-PDF file should be rejected."""
+
+    response = await client.post(
+        "/api/v1/reports/upload",
+        files={
+            "file": (
+                "test.txt",
+                b"This is not a PDF.",
+                "text/plain",
+            )
+        },
+    )
+
+    assert response.status_code == 415
+    assert response.json()["detail"] == "Only PDF files are supported."
