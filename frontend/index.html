@@ -2,70 +2,37 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta
-        name="viewport"
-        content="width=device-width, initial-scale=1.0"
-    >
-
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MedExplain</title>
-
-    <link
-        rel="stylesheet"
-        href="/frontend/css/style.css"
-    >
+    <link rel="stylesheet" href="/frontend/css/style.css">
 </head>
-
 <body>
-
     <header class="site-header">
         <div class="container">
-            <a href="/" class="logo">
-                MedExplain
-            </a>
-
-            <p class="tagline">
-                Understand your medical reports more clearly.
-            </p>
+            <a href="/" class="logo">MedExplain</a>
+            <p class="tagline">Understand your medical reports more clearly.</p>
         </div>
     </header>
-
 
     <main>
         <section class="hero">
             <div class="container">
-
-                <h1>
-                    Understand your medical report
-                </h1>
-
+                <h1>Understand your medical report</h1>
                 <p class="hero-description">
                     Upload a medical report and get an easy-to-understand
                     explanation of the information in it.
                 </p>
-
             </div>
         </section>
 
-
         <section class="upload-section">
             <div class="container">
-
                 <div class="upload-card">
-
-                    <h2>
-                        Upload your report
-                    </h2>
-
-                    <p>
-                        Supported format: PDF
-                    </p>
+                    <h2>Upload your report</h2>
+                    <p>Supported format: PDF</p>
 
                     <form id="upload-form">
-
-                        <label
-                            for="report-file"
-                            class="file-label"
-                        >
+                        <label for="report-file" class="file-label">
                             Choose PDF
                         </label>
 
@@ -76,20 +43,13 @@
                             accept=".pdf,application/pdf"
                         >
 
-                        <p
-                            id="file-name"
-                            class="file-name"
-                        >
+                        <p id="file-name" class="file-name">
                             No file selected
                         </p>
 
-                        <button
-                            type="submit"
-                            id="upload-button"
-                        >
+                        <button type="submit" id="upload-button">
                             Upload Report
                         </button>
-
                     </form>
 
                     <p
@@ -97,42 +57,31 @@
                         class="upload-status"
                         aria-live="polite"
                     ></p>
-
                 </div>
-
             </div>
         </section>
 
-
-        <section
-            id="result-section"
-            class="result-section"
-            hidden
-        >
+        <section id="result-section" class="result-section" hidden>
             <div class="container">
-
                 <div class="result-card">
-
-                    <h2>
-                        Report Status
-                    </h2>
+                    <h2>Extracted Report</h2>
 
                     <p>
-                        Report ID:
-                        <span id="report-id"></span>
+                        File:
+                        <span id="report-filename"></span>
                     </p>
 
                     <p>
-                        Status:
-                        <span id="report-status"></span>
+                        Pages:
+                        <span id="report-page-count"></span>
                     </p>
 
+                    <h3>Extracted Text</h3>
+                    <pre id="report-text"></pre>
                 </div>
-
             </div>
         </section>
     </main>
-
 
     <footer class="site-footer">
         <div class="container">
@@ -145,6 +94,5 @@
 
     <script src="./config.js"></script>
     <script src="./js/app.js"></script>
-
 </body>
 </html>

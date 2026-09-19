@@ -1,13 +1,5 @@
 "use strict";
 
-
-/* =========================
-   Configuration
-   ========================= */
-
-// const API_BASE_URL = "http://127.0.0.1:8000/api/v1";
-
-
 /* =========================
    DOM Elements
    ========================= */
@@ -19,8 +11,12 @@ const uploadStatus = document.getElementById("upload-status");
 const uploadButton = document.getElementById("upload-button");
 
 const resultSection = document.getElementById("result-section");
-const reportIdElement = document.getElementById("report-id");
-const reportStatusElement = document.getElementById("report-status");
+const reportFilenameElement =
+    document.getElementById("report-filename");
+const reportPageCountElement =
+    document.getElementById("report-page-count");
+const reportTextElement =
+    document.getElementById("report-text");
 
 
 /* =========================
@@ -36,7 +32,6 @@ reportFileInput.addEventListener("change", () => {
     }
 
     fileNameElement.textContent = file.name;
-
     clearStatus();
     hideResult();
 });
@@ -52,20 +47,12 @@ uploadForm.addEventListener("submit", async (event) => {
     const file = reportFileInput.files[0];
 
     if (!file) {
-        showStatus(
-            "Please select a PDF report first.",
-            "error"
-        );
-
+        showStatus("Please select a PDF report first.", "error");
         return;
     }
 
     if (file.type !== "application/pdf") {
-        showStatus(
-            "Please select a PDF file.",
-            "error"
-        );
-
+        showStatus("Please select a PDF file.", "error");
         return;
     }
 
@@ -74,16 +61,14 @@ uploadForm.addEventListener("submit", async (event) => {
     hideResult();
 
     try {
+        const formData = new FormData();
+        formData.append("file", file);
+
         const response = await fetch(
-            `${MEDEXPLAIN_CONFIG.API_BASE_URL}/reports`,
+            `${MEDEXPLAIN_CONFIG.API_BASE_URL}/reports/upload`,
             {
                 method: "POST",
-                headers: {
-                    "Content-Type": "application/json"
-                },
-                body: JSON.stringify({
-                    filename: file.name
-                })
+                body: formData
             }
         );
 
@@ -91,22 +76,18 @@ uploadForm.addEventListener("submit", async (event) => {
 
         if (!response.ok) {
             throw new Error(
-                data.detail || "Unable to create the report."
+                data.detail || "Unable to upload the report."
             );
         }
 
-        showStatus(
-            "Report created successfully.",
-            "success"
-        );
-
+        showStatus("Report uploaded successfully.", "success");
         showResult(data);
 
     } catch (error) {
         console.error("Upload error:", error);
 
         showStatus(
-            "Unable to connect to the MedExplain API.",
+            error.message || "Unable to connect to the MedExplain API.",
             "error"
         );
 
@@ -125,31 +106,28 @@ function showStatus(message, type) {
     uploadStatus.className = `upload-status ${type}`;
 }
 
-
 function clearStatus() {
     uploadStatus.textContent = "";
     uploadStatus.className = "upload-status";
 }
 
-
 function showResult(data) {
-    reportIdElement.textContent = data.report_id;
-    reportStatusElement.textContent = data.status;
+    reportFilenameElement.textContent = data.filename;
+    reportPageCountElement.textContent = data.page_count;
+    reportTextElement.textContent = data.text;
 
     resultSection.hidden = false;
 }
-
 
 function hideResult() {
     resultSection.hidden = true;
 }
 
-
 function setLoadingState(isLoading) {
     uploadButton.disabled = isLoading;
 
     if (isLoading) {
-        uploadButton.textContent = "Creating Report...";
+        uploadButton.textContent = "Uploading...";
     } else {
         uploadButton.textContent = "Upload Report";
     }
