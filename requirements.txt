@@ -8,3 +8,4 @@ httpx
 asgi-lifespan
 pypdf
 python-multipart
+sentence-transformers
