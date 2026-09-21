@@ -17,7 +17,7 @@ async def initialize_database() -> None:
         settings.mongodb_uri,
         server_api=ServerApi(
             version="1",
-            strict=True,
+            strict=False,
             deprecation_errors=True,
         ),
     )
