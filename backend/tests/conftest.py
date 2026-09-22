@@ -7,15 +7,12 @@ from httpx import ASGITransport, AsyncClient
 from app.main import app
 
 
-@pytest_asyncio.fixture(
-    loop_scope="function",
-)
+@pytest_asyncio.fixture(loop_scope="function")
 async def client() -> AsyncGenerator[AsyncClient, None]:
     """
     Provide an async HTTP client with an application lifespan
     running on the same event loop as the test.
     """
-
     async with LifespanManager(app):
         transport = ASGITransport(app=app)
 

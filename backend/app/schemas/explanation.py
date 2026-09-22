@@ -2,8 +2,6 @@ from pydantic import BaseModel, Field
 
 
 class ExplanationRequest(BaseModel):
-    """Request body for generating a medical explanation."""
-
     question: str = Field(
         ...,
         min_length=1,
@@ -13,15 +11,26 @@ class ExplanationRequest(BaseModel):
 
 
 class ExplanationSource(BaseModel):
-    """Source used to ground the generated explanation."""
-
     title: str
     source: str
     source_url: str
 
 
 class ExplanationResponse(BaseModel):
-    """Response returned by the explanation API."""
+    answer: str
+    sources: list[ExplanationSource]
 
+
+class ReportExplanationRequest(BaseModel):
+    question: str = Field(
+        ...,
+        min_length=1,
+        max_length=2000,
+        description="Question about the uploaded medical report.",
+    )
+
+
+class ReportExplanationResponse(BaseModel):
+    report_id: str
     answer: str
     sources: list[ExplanationSource]

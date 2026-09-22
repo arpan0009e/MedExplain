@@ -1,15 +1,27 @@
+import logging
+from functools import lru_cache
+
 from fastapi import APIRouter, File, HTTPException, UploadFile, status
 
 from app.ingestion.pdf_extractor import extract_text_from_pdf
 from app.ingestion.text_cleaner import clean_text
 from app.repositories.report_repository import ReportRepository
+from app.schemas.explanation import (
+    ExplanationSource,
+    ReportExplanationRequest,
+    ReportExplanationResponse,
+)
 from app.schemas.report import (
     ReportCreate,
     ReportDetailResponse,
     ReportResponse,
     ReportUploadResponse,
 )
+from app.services.explanation import ExplanationService
 from app.services.report_service import ReportService
+
+
+logger = logging.getLogger(__name__)
 
 
 router = APIRouter(
@@ -17,8 +29,17 @@ router = APIRouter(
     tags=["Reports"],
 )
 
+
 report_repository = ReportRepository()
 report_service = ReportService(report_repository)
+
+
+@lru_cache(maxsize=1)
+def get_explanation_service() -> ExplanationService:
+    """Return a shared explanation service instance."""
+
+    return ExplanationService()
+
 
 MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 
@@ -104,6 +125,76 @@ async def upload_report(
         page_count=document["page_count"],
         text=document["extracted_text"],
     )
+
+
+@router.post(
+    "/{report_id}/explain",
+    response_model=ReportExplanationResponse,
+)
+async def explain_report(
+    report_id: str,
+    request: ReportExplanationRequest,
+) -> ReportExplanationResponse:
+    """
+    Generate an explanation based on a stored medical report
+    and the user's question.
+    """
+
+    try:
+        report = await report_service.get_report(report_id)
+
+        explanation_service = get_explanation_service()
+
+        result = await explanation_service.explain_report(
+            user_question=request.question,
+            report_text=report.text,
+        )
+
+        unique_sources: list[ExplanationSource] = []
+        seen_sources: set[tuple[str, str, str]] = set()
+
+        for chunk in result.sources:
+            source = ExplanationSource(
+                title=chunk.metadata.get("title", "Unknown"),
+                source=chunk.metadata.get("source", "Unknown"),
+                source_url=chunk.metadata.get("source_url", ""),
+            )
+
+            source_key = (
+                source.title,
+                source.source,
+                source.source_url,
+            )
+
+            if source_key not in seen_sources:
+                seen_sources.add(source_key)
+                unique_sources.append(source)
+
+        return ReportExplanationResponse(
+            report_id=report.report_id,
+            answer=result.answer,
+            sources=unique_sources,
+        )
+
+    except HTTPException:
+        raise
+
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
+    except Exception as exc:
+        logger.exception(
+            "Failed to generate explanation for report %s.",
+            report_id,
+        )
+
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to generate the medical explanation.",
+        ) from exc
 
 
 @router.get(
