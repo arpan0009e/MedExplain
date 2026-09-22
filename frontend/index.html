@@ -6,11 +6,14 @@
     <title>MedExplain</title>
     <link rel="stylesheet" href="/frontend/css/style.css">
 </head>
+
 <body>
     <header class="site-header">
         <div class="container">
             <a href="/" class="logo">MedExplain</a>
-            <p class="tagline">Understand your medical reports more clearly.</p>
+            <p class="tagline">
+                Understand your medical reports more clearly.
+            </p>
         </div>
     </header>
 
@@ -18,6 +21,7 @@
         <section class="hero">
             <div class="container">
                 <h1>Understand your medical report</h1>
+
                 <p class="hero-description">
                     Upload a medical report and get an easy-to-understand
                     explanation of the information in it.
@@ -29,6 +33,7 @@
             <div class="container">
                 <div class="upload-card">
                     <h2>Upload your report</h2>
+
                     <p>Supported format: PDF</p>
 
                     <form id="upload-form">
@@ -64,7 +69,9 @@
         <section id="result-section" class="result-section" hidden>
             <div class="container">
                 <div class="result-card">
-                    <h2>Extracted Report</h2>
+
+                    <!-- Uploaded Report -->
+                    <h2>Uploaded Report</h2>
 
                     <p>
                         File:
@@ -77,7 +84,72 @@
                     </p>
 
                     <h3>Extracted Text</h3>
+
                     <pre id="report-text"></pre>
+
+
+                    <!-- Ask Question -->
+                    <div class="explanation-section">
+                        <h2>Ask About Your Report</h2>
+
+                        <p class="section-description">
+                            Ask a question about the information contained
+                            in your uploaded report.
+                        </p>
+
+                        <form id="question-form">
+                            <label for="question-input">
+                                Your question
+                            </label>
+
+                            <textarea
+                                id="question-input"
+                                name="question"
+                                rows="4"
+                                maxlength="2000"
+                                placeholder="For example: What does my hemoglobin result mean?"
+                                required
+                            ></textarea>
+
+                            <button
+                                type="submit"
+                                id="explain-button"
+                            >
+                                Explain
+                            </button>
+                        </form>
+
+                        <p
+                            id="explanation-status"
+                            class="explanation-status"
+                            aria-live="polite"
+                        ></p>
+                    </div>
+
+
+                    <!-- AI Explanation -->
+                    <div
+                        id="explanation-result"
+                        class="explanation-result"
+                        hidden
+                    >
+                        <h2>Explanation</h2>
+
+                        <div
+                            id="explanation-answer"
+                            class="explanation-answer"
+                        ></div>
+
+
+                        <!-- Sources -->
+                        <div class="sources-section">
+                            <h3>Medical Sources</h3>
+
+                            <ul id="source-list">
+                            </ul>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </section>
