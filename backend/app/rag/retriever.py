@@ -1,3 +1,4 @@
+import re
 from dataclasses import dataclass
 
 from app.db.mongodb import get_knowledge_chunks_collection
@@ -9,8 +10,6 @@ VECTOR_INDEX_NAME = "knowledge_chunks_vector_index"
 
 @dataclass(frozen=True)
 class RetrievedChunk:
-    """A knowledge chunk returned by vector search."""
-
     chunk_id: str
     document_id: str
     text: str
@@ -19,32 +18,17 @@ class RetrievedChunk:
 
 
 class KnowledgeRetriever:
-    """Retrieves medically relevant knowledge using vector search."""
-
     def __init__(
         self,
         embedding_service: EmbeddingService | None = None,
-    ):
-        self.embedding_service = (
-            embedding_service or EmbeddingService()
-        )
+    ) -> None:
+        self.embedding_service = embedding_service or EmbeddingService()
 
     async def search(
         self,
         query: str,
-        top_k: int = 5,
+        top_k: int = 3,
     ) -> list[RetrievedChunk]:
-        """
-        Search the medical knowledge base using semantic similarity.
-
-        Args:
-            query: User's natural-language question.
-            top_k: Maximum number of chunks to retrieve.
-
-        Returns:
-            Relevant chunks ordered by vector-search score.
-        """
-
         if not query.strip():
             raise ValueError("Query cannot be empty.")
 
@@ -55,14 +39,18 @@ class KnowledgeRetriever:
 
         collection = get_knowledge_chunks_collection()
 
+        # Retrieve a larger candidate set first.
+        # We will rerank these candidates before returning the final results.
+        candidate_limit = max(top_k * 3, 10)
+
         pipeline = [
             {
                 "$vectorSearch": {
                     "index": VECTOR_INDEX_NAME,
                     "path": "embedding",
                     "queryVector": query_embedding,
-                    "numCandidates": max(top_k * 10, 50),
-                    "limit": top_k,
+                    "numCandidates": max(candidate_limit * 10, 50),
+                    "limit": candidate_limit,
                 }
             },
             {
@@ -72,21 +60,17 @@ class KnowledgeRetriever:
                     "document_id": 1,
                     "text": 1,
                     "metadata": 1,
-                    "score": {
-                        "$meta": "vectorSearchScore"
-                    },
+                    "score": {"$meta": "vectorSearchScore"},
                 }
             },
         ]
 
-        # AsyncCollection.aggregate() returns a coroutine
-        # that must be awaited to obtain the async cursor.
         cursor = await collection.aggregate(pipeline)
 
-        results: list[RetrievedChunk] = []
+        candidates: list[RetrievedChunk] = []
 
         async for document in cursor:
-            results.append(
+            candidates.append(
                 RetrievedChunk(
                     chunk_id=document["chunk_id"],
                     document_id=document["document_id"],
@@ -96,4 +80,69 @@ class KnowledgeRetriever:
                 )
             )
 
-        return results
+        return self._rerank(
+            query=query,
+            chunks=candidates,
+            top_k=top_k,
+        )
+
+    @staticmethod
+    def _tokenize(text: str) -> set[str]:
+        return set(
+            re.findall(
+                r"\b[a-z0-9]+\b",
+                text.lower(),
+            )
+        )
+
+    def _rerank(
+        self,
+        query: str,
+        chunks: list[RetrievedChunk],
+        top_k: int,
+    ) -> list[RetrievedChunk]:
+        if not chunks:
+            return []
+
+        query_tokens = self._tokenize(query)
+
+        ranked_chunks: list[tuple[float, RetrievedChunk]] = []
+
+        for chunk in chunks:
+            title = chunk.metadata.get("title", "")
+            title_tokens = self._tokenize(title)
+
+            text_tokens = self._tokenize(chunk.text)
+
+            title_overlap = len(query_tokens & title_tokens)
+            text_overlap = len(query_tokens & text_tokens)
+
+            # Base semantic similarity from MongoDB Vector Search.
+            semantic_score = chunk.score
+
+            # Exact title matches are more valuable than generic
+            # semantic similarity for medical terminology queries.
+            title_bonus = title_overlap * 0.20
+
+            # Small lexical relevance signal from the chunk content.
+            text_bonus = min(text_overlap * 0.02, 0.10)
+
+            final_score = (
+                semantic_score
+                + title_bonus
+                + text_bonus
+            )
+
+            ranked_chunks.append(
+                (final_score, chunk)
+            )
+
+        ranked_chunks.sort(
+            key=lambda item: item[0],
+            reverse=True,
+        )
+
+        return [
+            chunk
+            for _, chunk in ranked_chunks[:top_k]
+        ]
