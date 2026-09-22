@@ -120,3 +120,46 @@ async def test_upload_pdf_without_extractable_text(
 
     assert response.status_code == 422
     assert response.json()["detail"] == "The PDF contains no extractable text."
+
+@pytest.mark.asyncio
+async def test_uploaded_pdf_can_be_retrieved(
+    client: AsyncClient,
+) -> None:
+    """An uploaded PDF should be persisted and retrievable by report ID."""
+
+    with SAMPLE_PDF.open("rb") as pdf_file:
+        upload_response = await client.post(
+            "/api/v1/reports/upload",
+            files={
+                "file": (
+                    "sample_medical_report.pdf",
+                    pdf_file,
+                    "application/pdf",
+                )
+            },
+        )
+
+    assert upload_response.status_code == 200
+
+    upload_data = upload_response.json()
+
+    assert "report_id" in upload_data
+
+    report_id = upload_data["report_id"]
+
+    response = await client.get(
+        f"/api/v1/reports/{report_id}"
+    )
+
+    assert response.status_code == 200
+
+    data = response.json()
+
+    assert data["report_id"] == report_id
+    assert data["filename"] == "sample_medical_report.pdf"
+    assert data["status"] == "uploaded"
+    assert data["page_count"] == 1
+
+    assert "Hemoglobin: 13.5 g/dL" in data["text"]
+    assert "White Blood Cell Count: 7200 /uL" in data["text"]
+    assert "Platelets: 250000 /uL" in data["text"]

@@ -5,6 +5,7 @@ from app.ingestion.text_cleaner import clean_text
 from app.repositories.report_repository import ReportRepository
 from app.schemas.report import (
     ReportCreate,
+    ReportDetailResponse,
     ReportResponse,
     ReportUploadResponse,
 )
@@ -61,7 +62,6 @@ async def upload_report(
             detail="PDF file size must not exceed 10 MB.",
         )
 
-    # Verify that the file actually has a PDF signature.
     if not file_content.startswith(b"%PDF-"):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -108,11 +108,11 @@ async def upload_report(
 
 @router.get(
     "/{report_id}",
-    response_model=ReportResponse,
+    response_model=ReportDetailResponse,
 )
 async def get_report(
     report_id: str,
-) -> ReportResponse:
-    """Retrieve a medical report by ID."""
+) -> ReportDetailResponse:
+    """Retrieve a stored medical report by ID."""
 
     return await report_service.get_report(report_id)

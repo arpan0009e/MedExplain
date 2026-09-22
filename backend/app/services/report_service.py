@@ -1,7 +1,11 @@
 from fastapi import HTTPException, status
 
 from app.repositories.report_repository import ReportRepository
-from app.schemas.report import ReportCreate, ReportResponse
+from app.schemas.report import (
+    ReportCreate,
+    ReportDetailResponse,
+    ReportResponse,
+)
 
 
 class ReportService:
@@ -57,8 +61,8 @@ class ReportService:
     async def get_report(
         self,
         report_id: str,
-    ) -> ReportResponse:
-        """Retrieve a report by ID."""
+    ) -> ReportDetailResponse:
+        """Retrieve a stored medical report by ID."""
 
         document = await self.repository.get_by_id(report_id)
 
@@ -68,8 +72,10 @@ class ReportService:
                 detail="Report not found.",
             )
 
-        return ReportResponse(
+        return ReportDetailResponse(
             report_id=str(document["_id"]),
             filename=document["filename"],
             status=document["status"],
+            page_count=document.get("page_count", 0),
+            text=document.get("extracted_text", ""),
         )

@@ -13,11 +13,21 @@ class ReportCreate(BaseModel):
 
 
 class ReportResponse(BaseModel):
-    """Response schema for a medical report."""
+    """Response schema for a basic medical report record."""
 
     report_id: str
     filename: str
     status: str
+
+
+class ReportDetailResponse(BaseModel):
+    """Response schema for a stored and processed medical report."""
+
+    report_id: str
+    filename: str
+    status: str
+    page_count: int
+    text: str
 
 
 class ReportUploadResponse(BaseModel):
