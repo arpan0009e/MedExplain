@@ -29,6 +29,32 @@ class ReportRepository:
 
         return document
 
+    async def create_uploaded_report(
+        self,
+        filename: str,
+        page_count: int,
+        extracted_text: str,
+    ) -> dict:
+        """
+        Create a report document from an uploaded and processed PDF.
+
+        Stores the report metadata, page count, and cleaned extracted text.
+        """
+
+        document = {
+            "filename": filename,
+            "status": "uploaded",
+            "page_count": page_count,
+            "extracted_text": extracted_text,
+            "created_at": datetime.now(timezone.utc),
+        }
+
+        result = await self.collection.insert_one(document)
+
+        document["_id"] = result.inserted_id
+
+        return document
+
     async def get_by_id(self, report_id: str) -> dict | None:
         """Find a report by its MongoDB ObjectId."""
 

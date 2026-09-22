@@ -19,6 +19,8 @@ router = APIRouter(
 report_repository = ReportRepository()
 report_service = ReportService(report_repository)
 
+MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
+
 
 @router.post(
     "",
@@ -32,8 +34,6 @@ async def create_report(
 
     return await report_service.create_report(report)
 
-MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
-
 
 @router.post(
     "/upload",
@@ -42,7 +42,10 @@ MAX_PDF_SIZE = 10 * 1024 * 1024  # 10 MB
 async def upload_report(
     file: UploadFile = File(...),
 ) -> ReportUploadResponse:
-    """Upload a PDF medical report and extract its text."""
+    """
+    Upload a PDF medical report, extract its text,
+    clean the text, and persist the processed report.
+    """
 
     if file.content_type != "application/pdf":
         raise HTTPException(
@@ -54,7 +57,7 @@ async def upload_report(
 
     if len(file_content) > MAX_PDF_SIZE:
         raise HTTPException(
-            status_code=413,
+            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
             detail="PDF file size must not exceed 10 MB.",
         )
 
@@ -66,7 +69,9 @@ async def upload_report(
         )
 
     try:
-        extracted_text, page_count = extract_text_from_pdf(file_content)
+        extracted_text, page_count = extract_text_from_pdf(
+            file_content
+        )
     except ValueError as exc:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
@@ -77,14 +82,27 @@ async def upload_report(
 
     if not cleaned_text:
         raise HTTPException(
-            status_code=422,
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="The PDF contains no extractable text.",
         )
 
+    try:
+        document = await report_service.create_uploaded_report(
+            filename=file.filename or "unknown.pdf",
+            page_count=page_count,
+            extracted_text=cleaned_text,
+        )
+    except ValueError as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(exc),
+        ) from exc
+
     return ReportUploadResponse(
-        filename=file.filename or "unknown.pdf",
-        page_count=page_count,
-        text=cleaned_text,
+        report_id=str(document["_id"]),
+        filename=document["filename"],
+        page_count=document["page_count"],
+        text=document["extracted_text"],
     )
 
 

@@ -14,7 +14,7 @@ class ReportService:
         self,
         report: ReportCreate,
     ) -> ReportResponse:
-        """Create a report record."""
+        """Create a new report record."""
 
         document = await self.repository.create(
             filename=report.filename,
@@ -24,6 +24,34 @@ class ReportService:
             report_id=str(document["_id"]),
             filename=document["filename"],
             status=document["status"],
+        )
+
+    async def create_uploaded_report(
+        self,
+        filename: str,
+        page_count: int,
+        extracted_text: str,
+    ) -> dict:
+        """
+        Persist a successfully processed PDF report.
+
+        The extracted text should already be cleaned before
+        reaching this service method.
+        """
+
+        if not filename.strip():
+            raise ValueError("Filename cannot be empty.")
+
+        if page_count <= 0:
+            raise ValueError("Page count must be greater than zero.")
+
+        if not extracted_text.strip():
+            raise ValueError("Extracted report text cannot be empty.")
+
+        return await self.repository.create_uploaded_report(
+            filename=filename,
+            page_count=page_count,
+            extracted_text=extracted_text,
         )
 
     async def get_report(
