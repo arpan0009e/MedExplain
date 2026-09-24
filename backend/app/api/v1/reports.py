@@ -79,7 +79,7 @@ async def upload_report(
 
     if len(file_content) > MAX_PDF_SIZE:
         raise HTTPException(
-            status_code=status.HTTP_413_REQUEST_ENTITY_TOO_LARGE,
+            status_code=status.HTTP_413_CONTENT_TOO_LARGE,
             detail="PDF file size must not exceed 10 MB.",
         )
 
@@ -103,7 +103,7 @@ async def upload_report(
 
     if not cleaned_text:
         raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
             detail="The PDF contains no extractable text.",
         )
 
