@@ -1,20 +1,19 @@
 from fastapi import APIRouter
 
-from app.core.database import get_database
+router = APIRouter(
+    prefix="/health",
+    tags=["Health"],
+)
 
 
-router = APIRouter()
-
-
-@router.get("/health")
+@router.get("")
 async def health_check() -> dict[str, str]:
-    """Return the health status of the API and database."""
+    """
+    Lightweight health-check endpoint.
 
-    database = get_database()
-
-    await database.command("ping")
-
+    Used by Render and external uptime monitors to verify
+    that the FastAPI service is responding.
+    """
     return {
-        "status": "healthy",
-        "database": "connected",
+        "status": "ok",
     }
