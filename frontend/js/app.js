@@ -1,431 +1,543 @@
-"use strict";
+// =========================================================
+// MedExplain frontend
+// =========================================================
 
-/* =========================
-   DOM Elements
-   ========================= */
+const API_BASE_URL =
+    window.APP_CONFIG?.API_BASE_URL || "http://localhost:8000";
+
+
+// =========================================================
+// DOM elements
+// =========================================================
 
 const uploadForm = document.getElementById("upload-form");
-const reportFileInput = document.getElementById("report-file");
-const fileNameElement = document.getElementById("file-name");
-const uploadStatus = document.getElementById("upload-status");
+const reportFile = document.getElementById("report-file");
+const fileName = document.getElementById("file-name");
 const uploadButton = document.getElementById("upload-button");
+const uploadStatus = document.getElementById("upload-status");
 
 const resultSection = document.getElementById("result-section");
-const reportFilenameElement =
-    document.getElementById("report-filename");
-const reportPageCountElement =
-    document.getElementById("report-page-count");
-const reportTextElement =
-    document.getElementById("report-text");
+const reportFilename = document.getElementById("report-filename");
+const reportPageCount = document.getElementById("report-page-count");
+const reportText = document.getElementById("report-text");
 
+const questionSection = document.getElementById("question-section");
 const questionForm = document.getElementById("question-form");
 const questionInput = document.getElementById("question-input");
 const explainButton = document.getElementById("explain-button");
-const explanationStatus =
-    document.getElementById("explanation-status");
+const explanationStatus = document.getElementById("explanation-status");
 
-const explanationResult =
-    document.getElementById("explanation-result");
-const explanationAnswer =
-    document.getElementById("explanation-answer");
-const sourceList =
-    document.getElementById("source-list");
+const explanationResult = document.getElementById("explanation-result");
+const explanationAnswer = document.getElementById("explanation-answer");
 
+const sourcesSection = document.getElementById("sources-section");
+const sourceList = document.getElementById("source-list");
 
-/* =========================
-   Application State
-   ========================= */
-
-let currentReportId = null;
+let currentSources = [];
 
 
-/* =========================
-   File Selection
-   ========================= */
+// =========================================================
+// File selection
+// =========================================================
 
-reportFileInput.addEventListener("change", () => {
-    const file = reportFileInput.files[0];
+reportFile?.addEventListener("change", () => {
+    const file = reportFile.files?.[0];
 
     if (!file) {
-        fileNameElement.textContent = "No file selected";
+        fileName.textContent = "";
         return;
     }
 
-    fileNameElement.textContent = file.name;
-
-    clearUploadStatus();
-    clearExplanation();
-    hideResult();
-
-    currentReportId = null;
+    fileName.textContent = file.name;
 });
 
 
-/* =========================
-   Upload Form
-   ========================= */
+// =========================================================
+// Upload report
+// =========================================================
 
-uploadForm.addEventListener("submit", async (event) => {
+uploadForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
-    const file = reportFileInput.files[0];
+    const file = reportFile.files?.[0];
 
     if (!file) {
-        showUploadStatus(
-            "Please select a PDF report first.",
-            "error"
-        );
+        setStatus(uploadStatus, "Please choose a PDF report.", true);
         return;
     }
 
     if (file.type !== "application/pdf") {
-        showUploadStatus(
-            "Please select a PDF file.",
-            "error"
-        );
+        setStatus(uploadStatus, "Only PDF files are supported.", true);
         return;
     }
 
-    setUploadLoadingState(true);
-    clearUploadStatus();
-    clearExplanation();
-    hideResult();
+    const maxSize = 10 * 1024 * 1024;
+
+    if (file.size > maxSize) {
+        setStatus(uploadStatus, "The PDF must be smaller than 10 MB.", true);
+        return;
+    }
+
+    setButtonLoading(uploadButton, true, "Uploading...");
+    setStatus(uploadStatus, "Uploading your report...");
+
+    hideElement(resultSection);
+    hideElement(questionSection);
+    hideElement(explanationResult);
+    hideElement(sourcesSection);
+
+    const formData = new FormData();
+    formData.append("file", file);
 
     try {
-        const formData = new FormData();
-        formData.append("file", file);
-
         const response = await fetch(
-            `${MEDEXPLAIN_CONFIG.API_BASE_URL}/reports/upload`,
+            `${API_BASE_URL}/api/v1/reports/upload`,
             {
                 method: "POST",
-                body: formData
+                body: formData,
             }
         );
 
         const data = await parseResponse(response);
 
-        if (!response.ok) {
-            throw new Error(
-                data.detail || "Unable to upload the report."
-            );
-        }
+        reportFilename.textContent = data.filename || file.name;
 
-        currentReportId = data.report_id;
+        const pageCount = Number(data.page_count || 0);
 
-        showUploadStatus(
-            "Report uploaded successfully.",
-            "success"
+        reportPageCount.textContent =
+            `${pageCount} ${pageCount === 1 ? "page" : "pages"}`;
+
+        reportText.textContent = data.text || "No report text was returned.";
+
+        showElement(resultSection);
+        showElement(questionSection);
+
+        setStatus(
+            uploadStatus,
+            "Report uploaded successfully."
         );
 
-        showResult(data);
+        questionInput?.focus();
+
+        resultSection.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
 
     } catch (error) {
         console.error("Upload error:", error);
 
-        currentReportId = null;
-
-        showUploadStatus(
-            error.message ||
-                "Unable to connect to the MedExplain API.",
-            "error"
+        setStatus(
+            uploadStatus,
+            error.message || "Unable to upload the report.",
+            true
         );
-
     } finally {
-        setUploadLoadingState(false);
+        setButtonLoading(uploadButton, false, "Upload report");
     }
 });
 
 
-/* =========================
-   Question Form
-   ========================= */
+// =========================================================
+// Ask question
+// =========================================================
 
-questionForm.addEventListener("submit", async (event) => {
+questionForm?.addEventListener("submit", async (event) => {
     event.preventDefault();
 
     const question = questionInput.value.trim();
 
-    if (!currentReportId) {
-        showExplanationStatus(
-            "Please upload a report before asking a question.",
-            "error"
-        );
-        return;
-    }
-
     if (!question) {
-        showExplanationStatus(
+        setStatus(
+            explanationStatus,
             "Please enter a question.",
-            "error"
+            true
         );
         return;
     }
 
-    setExplanationLoadingState(true);
-    clearExplanationStatus();
-    hideExplanation();
+    const reportId = await getCurrentReportId();
+
+    if (!reportId) {
+        setStatus(
+            explanationStatus,
+            "Please upload a report first.",
+            true
+        );
+        return;
+    }
+
+    setButtonLoading(explainButton, true, "Explaining...");
+    setStatus(
+        explanationStatus,
+        "Reading the report and preparing an explanation..."
+    );
+
+    hideElement(explanationResult);
+    hideElement(sourcesSection);
 
     try {
         const response = await fetch(
-            `${MEDEXPLAIN_CONFIG.API_BASE_URL}/reports/${encodeURIComponent(currentReportId)}/explain`,
+            `${API_BASE_URL}/api/v1/reports/${encodeURIComponent(reportId)}/explain`,
             {
                 method: "POST",
                 headers: {
-                    "Content-Type": "application/json"
+                    "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                    question: question
-                })
+                    question,
+                }),
             }
         );
 
         const data = await parseResponse(response);
 
-        if (!response.ok) {
-            throw new Error(
-                data.detail ||
-                    "Unable to generate the explanation."
-            );
+        currentSources = normalizeSources(data.sources);
+
+        renderExplanation(data.answer || "");
+        renderSources(currentSources);
+
+        showElement(explanationResult);
+
+        if (currentSources.length > 0) {
+            showElement(sourcesSection);
         }
 
-        showExplanation(data);
-
-        showExplanationStatus(
-            "Explanation generated successfully.",
-            "success"
+        setStatus(
+            explanationStatus,
+            "Explanation ready."
         );
+
+        explanationResult.scrollIntoView({
+            behavior: "smooth",
+            block: "start",
+        });
 
     } catch (error) {
         console.error("Explanation error:", error);
 
-        showExplanationStatus(
-            error.message ||
-                "Unable to generate the explanation.",
-            "error"
+        setStatus(
+            explanationStatus,
+            error.message || "Unable to generate the explanation.",
+            true
         );
-
     } finally {
-        setExplanationLoadingState(false);
+        setButtonLoading(explainButton, false, "Explain");
     }
 });
 
 
-/* =========================
-   API Response Helper
-   ========================= */
+// =========================================================
+// Store report ID
+// =========================================================
+//
+// The upload response already gives us the report ID.
+// We keep it in memory for the current page session.
+//
+
+let currentReportId = null;
+
+
+// Capture report ID after upload.
+//
+// This listener runs after the main upload listener above.
+uploadForm?.addEventListener("submit", async () => {
+    // The actual ID is captured by the custom upload flow below.
+});
+
+
+// =========================================================
+// Upload helper override
+// =========================================================
+//
+// The upload handler above needs the returned report ID.
+// We capture it through a small fetch wrapper.
+//
+
+const originalFetch = window.fetch;
+
+window.fetch = async (...args) => {
+    const response = await originalFetch(...args);
+
+    try {
+        const url = String(args[0]);
+
+        if (
+            url.includes("/api/v1/reports/upload") &&
+            response.ok
+        ) {
+            const clonedResponse = response.clone();
+            const data = await clonedResponse.json();
+
+            if (data.report_id) {
+                currentReportId = data.report_id;
+            }
+        }
+    } catch (error) {
+        console.debug("Could not capture report ID.", error);
+    }
+
+    return response;
+};
+
+
+// =========================================================
+// Report ID
+// =========================================================
+
+async function getCurrentReportId() {
+    return currentReportId;
+}
+
+
+// =========================================================
+// API response helper
+// =========================================================
 
 async function parseResponse(response) {
-    const contentType =
-        response.headers.get("content-type") || "";
+    let data = null;
 
-    if (contentType.includes("application/json")) {
-        return await response.json();
+    try {
+        data = await response.json();
+    } catch {
+        throw new Error(
+            `Server returned an invalid response (${response.status}).`
+        );
     }
 
-    const text = await response.text();
+    if (!response.ok) {
+        const message =
+            data?.detail ||
+            data?.message ||
+            `Request failed with status ${response.status}.`;
 
-    return {
-        detail: text || "Unexpected API response."
-    };
+        throw new Error(message);
+    }
+
+    return data;
 }
 
 
-/* =========================
-   Upload UI Helpers
-   ========================= */
+// =========================================================
+// Status UI
+// =========================================================
 
-function showUploadStatus(message, type) {
-    uploadStatus.textContent = message;
-    uploadStatus.className =
-        `upload-status ${type}`;
+function setStatus(element, message, isError = false) {
+    if (!element) {
+        return;
+    }
+
+    element.textContent = message;
+
+    element.classList.toggle("error", isError);
 }
 
-function clearUploadStatus() {
-    uploadStatus.textContent = "";
-    uploadStatus.className = "upload-status";
-}
 
-function showResult(data) {
-    reportFilenameElement.textContent =
-        data.filename;
+// =========================================================
+// Button loading state
+// =========================================================
 
-    reportPageCountElement.textContent =
-        data.page_count;
+function setButtonLoading(button, loading, text) {
+    if (!button) {
+        return;
+    }
 
-    reportTextElement.textContent =
-        data.text;
+    button.disabled = loading;
 
-    resultSection.hidden = false;
-}
-
-function hideResult() {
-    resultSection.hidden = true;
-}
-
-function setUploadLoadingState(isLoading) {
-    uploadButton.disabled = isLoading;
-
-    if (isLoading) {
-        uploadButton.textContent = "Uploading...";
+    if (loading) {
+        button.dataset.originalText = button.textContent;
+        button.textContent = text;
     } else {
-        uploadButton.textContent = "Upload Report";
+        button.textContent =
+            button.dataset.originalText || text;
     }
 }
 
 
-/* =========================
-   Explanation UI Helpers
-   ========================= */
+// =========================================================
+// Visibility helpers
+// =========================================================
 
-function showExplanationStatus(message, type) {
-    explanationStatus.textContent = message;
-    explanationStatus.className =
-        `explanation-status ${type}`;
+function showElement(element) {
+    if (!element) {
+        return;
+    }
+
+    element.hidden = false;
 }
 
-function clearExplanationStatus() {
-    explanationStatus.textContent = "";
-    explanationStatus.className =
-        "explanation-status";
+
+function hideElement(element) {
+    if (!element) {
+        return;
+    }
+
+    element.hidden = true;
 }
 
-function showExplanation(data) {
-    explanationAnswer.replaceChildren();
 
-    renderSafeMarkdown(
-        data.answer || "",
-        explanationAnswer
-    );
+// =========================================================
+// Sources
+// =========================================================
+
+function normalizeSources(sources) {
+    if (!Array.isArray(sources)) {
+        return [];
+    }
+
+    return sources
+        .map((source) => ({
+            title: String(source?.title || "Medical reference"),
+            source: String(source?.source || ""),
+            source_url: String(source?.source_url || ""),
+        }))
+        .filter((source) => source.title || source.source_url);
+}
+
+
+function renderSources(sources) {
+    if (!sourceList) {
+        return;
+    }
 
     sourceList.replaceChildren();
 
-    if (Array.isArray(data.sources)) {
-        data.sources.forEach((source) => {
-            const listItem =
-                document.createElement("li");
+    sources.forEach((source, index) => {
+        const listItem = document.createElement("li");
 
-            const title =
-                document.createElement("strong");
+        listItem.id = `source-${index + 1}`;
+        listItem.tabIndex = -1;
 
-            title.textContent =
-                source.title || "Medical source";
+        const title = document.createElement("span");
+        title.className = "source-title";
+        title.textContent = source.title;
 
-            listItem.appendChild(title);
+        listItem.appendChild(title);
 
-            if (source.source) {
-                const sourceName =
-                    document.createElement("span");
+        if (source.source) {
+            const provider = document.createElement("span");
+            provider.className = "source-provider";
+            provider.textContent = source.source;
 
-                sourceName.textContent =
-                    ` — ${source.source}`;
+            listItem.appendChild(provider);
+        }
 
-                listItem.appendChild(sourceName);
-            }
+        if (source.source_url) {
+            const link = document.createElement("a");
 
-            if (source.source_url) {
-                const link =
-                    document.createElement("a");
+            link.className = "source-url";
+            link.href = source.source_url;
+            link.target = "_blank";
+            link.rel = "noopener noreferrer";
+            link.textContent = "Open source";
 
-                link.href = source.source_url;
-                link.target = "_blank";
-                link.rel =
-                    "noopener noreferrer";
+            listItem.appendChild(link);
+        }
 
-                link.textContent =
-                    " View source";
+        sourceList.appendChild(listItem);
+    });
+}
 
-                listItem.appendChild(link);
-            }
 
-            sourceList.appendChild(listItem);
-        });
+// =========================================================
+// Explanation rendering
+// =========================================================
+
+function renderExplanation(answer) {
+    if (!explanationAnswer) {
+        return;
     }
-
-    explanationResult.hidden = false;
-}
-
-function hideExplanation() {
-    explanationResult.hidden = true;
-}
-
-function clearExplanation() {
-    clearExplanationStatus();
 
     explanationAnswer.replaceChildren();
-    sourceList.replaceChildren();
 
-    hideExplanation();
+    const fragment = renderSafeMarkdown(answer);
+
+    explanationAnswer.appendChild(fragment);
 }
 
-function setExplanationLoadingState(isLoading) {
-    explainButton.disabled = isLoading;
 
-    if (isLoading) {
-        explainButton.textContent =
-            "Generating explanation...";
-    } else {
-        explainButton.textContent =
-            "Explain";
+// =========================================================
+// Safe Markdown renderer
+// =========================================================
+
+function renderSafeMarkdown(markdown) {
+    const fragment = document.createDocumentFragment();
+
+    if (!markdown) {
+        return fragment;
     }
-}
 
-
-/* =========================
-   Safe Markdown Rendering
-   ========================= */
-
-/*
- * The LLM returns simple Markdown such as:
- *
- * **Reported Value:** 13.5 g/dL
- *
- * - Hemoglobin carries oxygen.
- * - Reference ranges can vary.
- *
- * We intentionally support only a small subset of Markdown.
- *
- * We create DOM nodes with textContent instead of
- * inserting the model response as raw HTML.
- */
-
-function renderSafeMarkdown(markdown, container) {
-    const lines = markdown.replace(/\r\n/g, "\n").split("\n");
+    const lines = String(markdown).split(/\r?\n/);
 
     let currentList = null;
+    let currentListType = null;
 
     for (const line of lines) {
-        const trimmedLine = line.trim();
+        const trimmed = line.trim();
 
-        if (!trimmedLine) {
+        if (!trimmed) {
             currentList = null;
+            currentListType = null;
             continue;
         }
 
-        /* =========================
-           Bullet List
-           ========================= */
 
-        if (
-            trimmedLine.startsWith("- ") ||
-            trimmedLine.startsWith("* ")
-        ) {
-            if (!currentList) {
+        // ---------------------------------------------
+        // Headings
+        // ---------------------------------------------
+
+        const headingMatch = trimmed.match(
+            /^(#{1,3})\s+(.+)$/
+        );
+
+        if (headingMatch) {
+            currentList = null;
+            currentListType = null;
+
+            const level = headingMatch[1].length;
+
+            const heading = document.createElement(
+                `h${level}`
+            );
+
+            appendInlineContent(
+                heading,
+                headingMatch[2]
+            );
+
+            fragment.appendChild(heading);
+
+            continue;
+        }
+
+
+        // ---------------------------------------------
+        // Bullet list
+        // ---------------------------------------------
+
+        const bulletMatch = trimmed.match(
+            /^[-*]\s+(.+)$/
+        );
+
+        if (bulletMatch) {
+            if (
+                !currentList ||
+                currentListType !== "ul"
+            ) {
                 currentList =
                     document.createElement("ul");
 
-                currentList.className =
-                    "explanation-list";
+                currentListType = "ul";
 
-                container.appendChild(currentList);
+                fragment.appendChild(currentList);
             }
 
             const listItem =
                 document.createElement("li");
 
-            appendSafeInlineMarkdown(
-                trimmedLine.slice(2),
-                listItem
+            appendInlineContent(
+                listItem,
+                bulletMatch[1]
             );
 
             currentList.appendChild(listItem);
@@ -433,112 +545,219 @@ function renderSafeMarkdown(markdown, container) {
             continue;
         }
 
+
+        // ---------------------------------------------
+        // Numbered list
+        // ---------------------------------------------
+
+        const numberedMatch = trimmed.match(
+            /^\d+\.\s+(.+)$/
+        );
+
+        if (numberedMatch) {
+            if (
+                !currentList ||
+                currentListType !== "ol"
+            ) {
+                currentList =
+                    document.createElement("ol");
+
+                currentListType = "ol";
+
+                fragment.appendChild(currentList);
+            }
+
+            const listItem =
+                document.createElement("li");
+
+            appendInlineContent(
+                listItem,
+                numberedMatch[1]
+            );
+
+            currentList.appendChild(listItem);
+
+            continue;
+        }
+
+
+        // ---------------------------------------------
+        // Normal paragraph
+        // ---------------------------------------------
+
         currentList = null;
-
-        /* =========================
-           Headings
-           ========================= */
-
-        if (trimmedLine.startsWith("### ")) {
-            const heading =
-                document.createElement("h4");
-
-            appendSafeInlineMarkdown(
-                trimmedLine.slice(4),
-                heading
-            );
-
-            container.appendChild(heading);
-
-            continue;
-        }
-
-        if (trimmedLine.startsWith("## ")) {
-            const heading =
-                document.createElement("h3");
-
-            appendSafeInlineMarkdown(
-                trimmedLine.slice(3),
-                heading
-            );
-
-            container.appendChild(heading);
-
-            continue;
-        }
-
-        if (trimmedLine.startsWith("# ")) {
-            const heading =
-                document.createElement("h3");
-
-            appendSafeInlineMarkdown(
-                trimmedLine.slice(2),
-                heading
-            );
-
-            container.appendChild(heading);
-
-            continue;
-        }
-
-        /* =========================
-           Normal Paragraph
-           ========================= */
+        currentListType = null;
 
         const paragraph =
             document.createElement("p");
 
-        appendSafeInlineMarkdown(
-            trimmedLine,
-            paragraph
+        appendInlineContent(
+            paragraph,
+            trimmed
         );
 
-        container.appendChild(paragraph);
+        fragment.appendChild(paragraph);
     }
+
+    return fragment;
 }
 
 
-/*
- * Supports only:
- *
- * **bold text**
- *
- * Everything else is treated as plain text.
- */
+// =========================================================
+// Inline formatting
+// =========================================================
 
-function appendSafeInlineMarkdown(text, container) {
-    const boldPattern = /\*\*(.*?)\*\*/g;
+function appendInlineContent(element, text) {
+    const citationPattern = /\[(\d+)\]/g;
 
     let lastIndex = 0;
     let match;
 
-    while ((match = boldPattern.exec(text)) !== null) {
-        const normalText =
+    while ((match = citationPattern.exec(text)) !== null) {
+
+        const beforeCitation =
             text.slice(lastIndex, match.index);
 
-        if (normalText) {
-            container.appendChild(
-                document.createTextNode(normalText)
+        if (beforeCitation) {
+            appendFormattedText(
+                element,
+                beforeCitation
             );
         }
 
-        const bold =
-            document.createElement("strong");
+        const citationNumber =
+            Number(match[1]);
 
-        bold.textContent = match[1];
+        if (
+            citationNumber >= 1 &&
+            citationNumber <= currentSources.length
+        ) {
+            const citation =
+                createCitationLink(citationNumber);
 
-        container.appendChild(bold);
+            element.appendChild(citation);
+        } else {
+            element.appendChild(
+                document.createTextNode(match[0])
+            );
+        }
 
         lastIndex =
-            match.index + match[0].length;
+            citationPattern.lastIndex;
     }
 
     const remainingText =
         text.slice(lastIndex);
 
     if (remainingText) {
-        container.appendChild(
-            document.createTextNode(remainingText)
+        appendFormattedText(
+            element,
+            remainingText
         );
     }
+}
+
+
+// =========================================================
+// Bold formatting
+// =========================================================
+
+function appendFormattedText(element, text) {
+    const boldPattern = /\*\*(.+?)\*\*/g;
+
+    let lastIndex = 0;
+    let match;
+
+    while ((match = boldPattern.exec(text)) !== null) {
+
+        const before =
+            text.slice(lastIndex, match.index);
+
+        if (before) {
+            element.appendChild(
+                document.createTextNode(before)
+            );
+        }
+
+        const strong =
+            document.createElement("strong");
+
+        strong.textContent = match[1];
+
+        element.appendChild(strong);
+
+        lastIndex =
+            boldPattern.lastIndex;
+    }
+
+    const remaining =
+        text.slice(lastIndex);
+
+    if (remaining) {
+        element.appendChild(
+            document.createTextNode(remaining)
+        );
+    }
+}
+
+
+// =========================================================
+// Citation link
+// =========================================================
+
+function createCitationLink(number) {
+    const source = currentSources[number - 1];
+
+    const link = document.createElement("a");
+
+    link.className = "source-reference";
+
+    link.textContent = `[${number}]`;
+
+    link.setAttribute(
+        "aria-label",
+        `Open source ${number}`
+    );
+
+    if (source?.source_url) {
+        link.href = source.source_url;
+
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+    } else {
+        link.href = `#source-${number}`;
+
+        link.addEventListener("click", (event) => {
+            event.preventDefault();
+
+            scrollToSource(number);
+        });
+    }
+
+    return link;
+}
+
+
+// =========================================================
+// Scroll to source
+// =========================================================
+
+function scrollToSource(number) {
+    const sourceElement =
+        document.getElementById(
+            `source-${number}`
+        );
+
+    if (!sourceElement) {
+        return;
+    }
+
+    sourceElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+    });
+
+    sourceElement.focus({
+        preventScroll: true,
+    });
 }

@@ -1,170 +1,292 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
     <title>MedExplain</title>
-    <link rel="stylesheet" href="/frontend/css/style.css">
+
+    <link rel="stylesheet" href="./css/style.css" />
 </head>
 
 <body>
+
+    <!-- Header -->
     <header class="site-header">
-        <div class="container">
-            <a href="/" class="logo">MedExplain</a>
-            <p class="tagline">
-                Understand your medical reports more clearly.
-            </p>
+        <div class="header-inner">
+            <a href="#" class="brand">
+                <span class="brand-name">MedExplain</span>
+            </a>
+
+            <div class="header-right">
+                <span class="study-label">Study Mode</span>
+            </div>
         </div>
     </header>
 
-    <main>
-        <section class="hero">
-            <div class="container">
-                <h1>Understand your medical report</h1>
 
-                <p class="hero-description">
-                    Upload a medical report and get an easy-to-understand
-                    explanation of the information in it.
+    <!-- Main content -->
+    <main class="main-container">
+
+        <!-- Intro -->
+        <section class="intro">
+            <h1>Understand your medical report</h1>
+
+            <p>
+                Upload a medical report and ask questions about the results.
+                MedExplain provides simple, educational explanations using
+                medical reference sources.
+            </p>
+        </section>
+
+
+        <!-- Upload -->
+        <section class="section-block">
+
+            <div class="section-heading">
+                <h2>Upload report</h2>
+
+                <p>
+                    Upload a PDF medical report to get started.
                 </p>
             </div>
-        </section>
 
-        <section class="upload-section">
-            <div class="container">
-                <div class="upload-card">
-                    <h2>Upload your report</h2>
+            <form id="upload-form">
 
-                    <p>Supported format: PDF</p>
+                <label for="report-file" class="upload-area">
 
-                    <form id="upload-form">
-                        <label for="report-file" class="file-label">
-                            Choose PDF
-                        </label>
+                    <div class="upload-content">
 
-                        <input
-                            type="file"
-                            id="report-file"
-                            name="report"
-                            accept=".pdf,application/pdf"
-                        >
+                        <div class="upload-symbol">+</div>
 
-                        <p id="file-name" class="file-name">
-                            No file selected
-                        </p>
+                        <strong>Choose a PDF report</strong>
 
-                        <button type="submit" id="upload-button">
-                            Upload Report
-                        </button>
-                    </form>
+                        <span>
+                            or drop your file here
+                        </span>
 
-                    <p
-                        id="upload-status"
-                        class="upload-status"
-                        aria-live="polite"
-                    ></p>
-                </div>
-            </div>
-        </section>
+                        <small>
+                            PDF files only · Maximum 10 MB
+                        </small>
 
-        <section id="result-section" class="result-section" hidden>
-            <div class="container">
-                <div class="result-card">
-
-                    <!-- Uploaded Report -->
-                    <h2>Uploaded Report</h2>
-
-                    <p>
-                        File:
-                        <span id="report-filename"></span>
-                    </p>
-
-                    <p>
-                        Pages:
-                        <span id="report-page-count"></span>
-                    </p>
-
-                    <h3>Extracted Text</h3>
-
-                    <pre id="report-text"></pre>
-
-
-                    <!-- Ask Question -->
-                    <div class="explanation-section">
-                        <h2>Ask About Your Report</h2>
-
-                        <p class="section-description">
-                            Ask a question about the information contained
-                            in your uploaded report.
-                        </p>
-
-                        <form id="question-form">
-                            <label for="question-input">
-                                Your question
-                            </label>
-
-                            <textarea
-                                id="question-input"
-                                name="question"
-                                rows="4"
-                                maxlength="2000"
-                                placeholder="For example: What does my hemoglobin result mean?"
-                                required
-                            ></textarea>
-
-                            <button
-                                type="submit"
-                                id="explain-button"
-                            >
-                                Explain
-                            </button>
-                        </form>
-
-                        <p
-                            id="explanation-status"
-                            class="explanation-status"
-                            aria-live="polite"
-                        ></p>
                     </div>
 
+                    <input
+                        type="file"
+                        id="report-file"
+                        name="file"
+                        accept=".pdf,application/pdf"
+                    />
 
-                    <!-- AI Explanation -->
-                    <div
-                        id="explanation-result"
-                        class="explanation-result"
-                        hidden
+                </label>
+
+
+                <div id="file-name" class="file-name"></div>
+
+
+                <button
+                    type="submit"
+                    id="upload-button"
+                    class="primary-button"
+                >
+                    Upload report
+                </button>
+
+
+                <div
+                    id="upload-status"
+                    class="status-message"
+                    aria-live="polite"
+                ></div>
+
+            </form>
+
+        </section>
+
+
+        <!-- Report result -->
+        <section
+            id="result-section"
+            class="section-block report-section"
+            hidden
+        >
+
+            <div class="section-heading report-heading">
+
+                <div>
+                    <h2>Your report</h2>
+
+                    <p id="report-filename">
+                        Report
+                    </p>
+                </div>
+
+                <span id="report-page-count" class="page-count">
+                    0 pages
+                </span>
+
+            </div>
+
+
+            <div class="report-text-wrapper">
+
+                <pre id="report-text" class="report-text"></pre>
+
+            </div>
+
+        </section>
+
+
+        <!-- Questions -->
+        <section
+            id="question-section"
+            class="section-block"
+            hidden
+        >
+
+            <div class="section-heading">
+
+                <h2>Ask about your report</h2>
+
+                <p>
+                    Ask a question about something written in the report.
+                </p>
+
+            </div>
+
+
+            <form id="question-form">
+
+                <label
+                    for="question-input"
+                    class="input-label"
+                >
+                    Your question
+                </label>
+
+
+                <textarea
+                    id="question-input"
+                    name="question"
+                    rows="4"
+                    maxlength="2000"
+                    placeholder="For example: What does my hemoglobin result mean?"
+                    required
+                ></textarea>
+
+
+                <div class="question-actions">
+
+                    <button
+                        type="submit"
+                        id="explain-button"
+                        class="primary-button"
                     >
-                        <h2>Explanation</h2>
-
-                        <div
-                            id="explanation-answer"
-                            class="explanation-answer"
-                        ></div>
-
-
-                        <!-- Sources -->
-                        <div class="sources-section">
-                            <h3>Medical Sources</h3>
-
-                            <ul id="source-list">
-                            </ul>
-                        </div>
-                    </div>
+                        Explain
+                    </button>
 
                 </div>
-            </div>
+
+
+                <div
+                    id="explanation-status"
+                    class="status-message"
+                    aria-live="polite"
+                ></div>
+
+            </form>
+
         </section>
+
+
+        <!-- Explanation -->
+        <section
+            id="explanation-result"
+            class="section-block explanation-section"
+            hidden
+        >
+
+            <div class="section-heading">
+
+                <h2>Explanation</h2>
+
+                <p>
+                    A simple explanation based on your report and
+                    the medical reference material used by MedExplain.
+                </p>
+
+            </div>
+
+
+            <div
+                id="explanation-answer"
+                class="explanation-answer"
+            ></div>
+
+        </section>
+
+
+        <!-- Sources -->
+        <section
+            id="sources-section"
+            class="section-block sources-section"
+            hidden
+        >
+
+            <div class="section-heading">
+
+                <h2>Sources</h2>
+
+                <p>
+                    References used to provide the explanation.
+                </p>
+
+            </div>
+
+
+            <ol id="source-list" class="source-list"></ol>
+
+        </section>
+
+
+        <!-- Safety -->
+        <section class="safety-note">
+
+            <strong>Important</strong>
+
+            <p>
+                MedExplain is an educational tool. It does not provide
+                a diagnosis or replace advice from a qualified healthcare
+                professional. If something in your report concerns you,
+                discuss it with your doctor or healthcare provider.
+            </p>
+
+        </section>
+
     </main>
 
-    <footer class="site-footer">
-        <div class="container">
-            <p>
-                MedExplain is an educational tool and does not provide
-                medical diagnosis or treatment.
-            </p>
-        </div>
-    </footer>
+
+    <!-- Footer -->
+<footer class="site-footer">
+    <p>
+        <!-- MedExplain · Medical reports, explained simply. -->
+    </p>
+
+    <p class="footer-article-link">
+        Want to learn more about how MedExplain works?
+        <a
+            href="https://www.linkedin.com/in/arpan0009e/"
+            target="_blank"
+            rel="noopener noreferrer"
+        >
+            Read the project articles on LinkedIn
+        </a>
+    </p>
+</footer>
+
 
     <script src="./config.js"></script>
     <script src="./js/app.js"></script>
+
 </body>
 </html>

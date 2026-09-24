@@ -1,51 +1,41 @@
-/* =========================
-   Base / Reset
-   ========================= */
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* =========================================================
+   MedExplain
+   Simple medical report study interface
+   ========================================================= */
 
 :root {
-    --background: #f5f7fa;
+    --background: #f7f7f5;
     --surface: #ffffff;
+    --surface-soft: #fafaf8;
 
-    --text-primary: #17202a;
-    --text-secondary: #5f6b76;
-    --text-muted: #7a8793;
+    --text: #242424;
+    --text-light: #666666;
+    --text-muted: #888888;
 
-    --border: #dfe4ea;
-    --border-focus: #2563eb;
+    --border: #deded9;
+    --border-dark: #c9c9c3;
 
-    --primary: #2563eb;
-    --primary-hover: #1d4ed8;
-    --primary-soft: #eff6ff;
+    --primary: #285943;
+    --primary-dark: #1f4635;
+    --primary-light: #edf4ef;
 
-    --success: #15803d;
-    --success-soft: #f0fdf4;
+    --warning-bg: #faf7ed;
+    --warning-border: #ddd2ad;
 
-    --error: #dc2626;
-    --error-soft: #fef2f2;
+    --error: #a33a32;
 
-    --shadow-sm:
-        0 2px 8px rgba(0, 0, 0, 0.04);
+    --radius: 6px;
 
-    --shadow-md:
-        0 8px 25px rgba(0, 0, 0, 0.06);
+    --content-width: 880px;
+}
 
-    --radius-sm: 8px;
-    --radius-md: 12px;
-    --radius-lg: 16px;
 
-    --container-width: 1100px;
-    --content-width: 760px;
+/* =========================================================
+   Reset
+   ========================================================= */
 
-    --transition:
-        150ms ease;
+* {
+    box-sizing: border-box;
 }
 
 html {
@@ -53,157 +43,244 @@ html {
 }
 
 body {
-    min-height: 100vh;
+    margin: 0;
+    background: var(--background);
+    color: var(--text);
 
     font-family:
-        Arial,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        Roboto,
         Helvetica,
+        Arial,
         sans-serif;
 
-    background: var(--background);
-    color: var(--text-primary);
-
+    font-size: 15px;
     line-height: 1.6;
-
-    -webkit-font-smoothing: antialiased;
-    text-rendering: optimizeLegibility;
 }
 
 button,
-input,
-textarea {
+textarea,
+input {
     font: inherit;
 }
 
 button {
-    border: 0;
+    cursor: pointer;
 }
 
-button:focus-visible,
-input:focus-visible,
-textarea:focus-visible,
-a:focus-visible,
-.file-label:focus-visible {
-    outline: 3px solid rgba(37, 99, 235, 0.25);
-    outline-offset: 2px;
-}
-
-.container {
-    width: min(
-        calc(100% - 2rem),
-        var(--container-width)
-    );
-
-    margin-inline: auto;
+a {
+    color: inherit;
 }
 
 
-/* =========================
+/* =========================================================
    Header
-   ========================= */
+   ========================================================= */
 
 .site-header {
+    height: 64px;
+
     background: var(--surface);
+
     border-bottom: 1px solid var(--border);
-    padding: 1.25rem 0;
 }
 
-.logo {
-    color: var(--primary);
+.header-inner {
+    width: min(var(--content-width), calc(100% - 40px));
+    height: 100%;
 
-    font-size: 1.5rem;
-    font-weight: 700;
+    margin: 0 auto;
 
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.brand {
     text-decoration: none;
 }
 
-.logo:hover {
-    color: var(--primary-hover);
+.brand-name {
+    font-size: 19px;
+    font-weight: 650;
+    letter-spacing: -0.3px;
 }
 
-.tagline {
-    margin-top: 0.2rem;
+.header-right {
+    color: var(--text-light);
+    font-size: 13px;
+}
 
-    color: var(--text-secondary);
+.study-label {
+    padding-left: 14px;
 
-    font-size: 0.9rem;
+    border-left: 1px solid var(--border);
 }
 
 
-/* =========================
-   Hero
-   ========================= */
+/* =========================================================
+   Main layout
+   ========================================================= */
 
-.hero {
-    padding: 5rem 0 3rem;
-    text-align: center;
+.main-container {
+    width: min(var(--content-width), calc(100% - 40px));
+
+    margin: 0 auto;
+    padding: 56px 0 80px;
 }
 
-.hero h1 {
-    max-width: 750px;
 
-    margin-inline: auto;
+/* =========================================================
+   Intro
+   ========================================================= */
 
-    font-size: clamp(
-        2rem,
-        5vw,
-        3.5rem
-    );
+.intro {
+    max-width: 700px;
 
-    line-height: 1.15;
-    letter-spacing: -0.02em;
+    margin-bottom: 48px;
 }
 
-.hero-description {
+.intro h1 {
+    margin: 0 0 12px;
+
+    font-size: 34px;
+    line-height: 1.2;
+
+    font-weight: 650;
+    letter-spacing: -0.7px;
+}
+
+.intro p {
     max-width: 650px;
 
-    margin: 1.25rem auto 0;
+    margin: 0;
 
-    color: var(--text-secondary);
+    color: var(--text-light);
 
-    font-size: 1.05rem;
+    font-size: 16px;
+    line-height: 1.7;
 }
 
 
-/* =========================
-   Upload Section
-   ========================= */
+/* =========================================================
+   Sections
+   ========================================================= */
 
-.upload-section {
-    padding: 1rem 0 4rem;
-}
+.section-block {
+    margin-bottom: 34px;
 
-.upload-card {
-    max-width: 650px;
-
-    margin-inline: auto;
-    padding: 2rem;
+    padding: 28px;
 
     background: var(--surface);
 
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
+    border-radius: var(--radius);
+}
+
+.section-heading {
+    margin-bottom: 22px;
+}
+
+.section-heading h2 {
+    margin: 0 0 5px;
+
+    font-size: 20px;
+    line-height: 1.35;
+
+    font-weight: 650;
+}
+
+.section-heading p {
+    margin: 0;
+
+    color: var(--text-light);
+
+    font-size: 14px;
+}
+
+
+/* =========================================================
+   Upload
+   ========================================================= */
+
+.upload-area {
+    position: relative;
+
+    display: block;
+
+    padding: 34px 24px;
 
     text-align: center;
 
-    box-shadow: var(--shadow-md);
+    background: var(--surface-soft);
+
+    border: 1px dashed var(--border-dark);
+    border-radius: var(--radius);
+
+    cursor: pointer;
+
+    transition:
+        border-color 0.15s ease,
+        background-color 0.15s ease;
 }
 
-.upload-card h2 {
-    font-size: 1.5rem;
-    line-height: 1.3;
+.upload-area:hover {
+    background: #f5f5f2;
+    border-color: var(--primary);
 }
 
-.upload-card > p {
-    margin-top: 0.5rem;
-
-    color: var(--text-secondary);
+.upload-area:focus-within {
+    outline: 2px solid var(--primary-light);
+    outline-offset: 2px;
 }
 
+.upload-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
 
-/* =========================
-   File Input
-   ========================= */
+.upload-symbol {
+    width: 34px;
+    height: 34px;
+
+    margin-bottom: 12px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: 1px solid var(--border-dark);
+    border-radius: 50%;
+
+    color: var(--primary);
+
+    font-size: 23px;
+    line-height: 1;
+}
+
+.upload-content strong {
+    margin-bottom: 2px;
+
+    font-size: 15px;
+    font-weight: 600;
+}
+
+.upload-content span {
+    color: var(--text-light);
+
+    font-size: 14px;
+}
+
+.upload-content small {
+    margin-top: 12px;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
+}
 
 #report-file {
     position: absolute;
@@ -211,503 +288,502 @@ a:focus-visible,
     width: 1px;
     height: 1px;
 
-    overflow: hidden;
-    clip: rect(0, 0, 0, 0);
-    white-space: nowrap;
+    opacity: 0;
+
+    pointer-events: none;
 }
 
-.file-label {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 
-    margin-top: 1.5rem;
-    padding: 0.75rem 1.25rem;
-
-    background: var(--background);
-
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
-
-    color: var(--text-primary);
-
-    cursor: pointer;
-
-    font-weight: 600;
-
-    transition:
-        border-color var(--transition),
-        background-color var(--transition);
-}
-
-.file-label:hover {
-    border-color: var(--primary);
-    background: var(--primary-soft);
-}
+/* =========================================================
+   File name
+   ========================================================= */
 
 .file-name {
-    min-height: 1.6rem;
+    min-height: 22px;
 
-    margin-top: 0.75rem;
+    margin-top: 12px;
 
-    color: var(--text-secondary);
+    color: var(--text-light);
 
-    font-size: 0.95rem;
-
-    overflow-wrap: anywhere;
+    font-size: 13px;
 }
 
 
-/* =========================
+/* =========================================================
    Buttons
-   ========================= */
+   ========================================================= */
 
-button {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
+.primary-button {
+    min-height: 42px;
 
-    min-height: 44px;
+    padding: 0 18px;
 
-    margin-top: 1rem;
-    padding: 0.75rem 1.5rem;
+    border: 1px solid var(--primary);
+    border-radius: 5px;
 
     background: var(--primary);
     color: #ffffff;
 
-    border-radius: var(--radius-sm);
-
+    font-size: 14px;
     font-weight: 600;
-
-    cursor: pointer;
 
     transition:
-        background-color var(--transition),
-        transform var(--transition),
-        opacity var(--transition);
+        background-color 0.15s ease,
+        border-color 0.15s ease;
 }
 
-button:hover:not(:disabled) {
-    background: var(--primary-hover);
+.primary-button:hover {
+    background: var(--primary-dark);
+    border-color: var(--primary-dark);
 }
 
-button:active:not(:disabled) {
-    transform: translateY(1px);
-}
-
-button:disabled {
+.primary-button:disabled {
+    opacity: 0.55;
     cursor: not-allowed;
-    opacity: 0.6;
+}
+
+#upload-button {
+    margin-top: 8px;
 }
 
 
-/* =========================
-   Status Messages
-   ========================= */
+/* =========================================================
+   Status messages
+   ========================================================= */
 
-.upload-status,
-.explanation-status {
-    min-height: 1.6rem;
+.status-message {
+    min-height: 22px;
 
-    margin-top: 1rem;
+    margin-top: 12px;
 
-    font-size: 0.95rem;
-    font-weight: 600;
+    color: var(--text-light);
+
+    font-size: 13px;
 }
 
-.upload-status.success,
-.explanation-status.success {
-    color: var(--success);
-}
-
-.upload-status.error,
-.explanation-status.error {
+.status-message.error {
     color: var(--error);
 }
 
 
-/* =========================
-   Results Section
-   ========================= */
+/* =========================================================
+   Report
+   ========================================================= */
 
-.result-section {
-    padding-bottom: 5rem;
+.report-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 20px;
 }
 
-.result-card {
-    max-width: var(--content-width);
+.report-heading p {
+    color: var(--text-light);
+}
 
-    margin-inline: auto;
-    padding: 2rem;
+.page-count {
+    flex-shrink: 0;
 
-    background: var(--surface);
+    padding: 4px 9px;
 
     border: 1px solid var(--border);
-    border-radius: var(--radius-md);
 
-    box-shadow: var(--shadow-sm);
+    color: var(--text-muted);
+
+    font-size: 12px;
+    white-space: nowrap;
 }
 
-.result-card h2 {
-    margin-bottom: 1rem;
+.report-text-wrapper {
+    max-height: 500px;
 
-    font-size: 1.6rem;
-    line-height: 1.3;
-}
+    overflow-y: auto;
 
-.result-card h3 {
-    margin-top: 1.75rem;
-    margin-bottom: 0.75rem;
+    padding: 18px;
 
-    font-size: 1.15rem;
-    line-height: 1.4;
-}
-
-.result-card p {
-    margin-top: 0.5rem;
-}
-
-
-/* =========================
-   Report Metadata
-   ========================= */
-
-#report-filename,
-#report-page-count {
-    font-weight: 600;
-}
-
-#report-text {
-    max-height: 420px;
-
-    margin-top: 1rem;
-    padding: 1rem;
-
-    overflow: auto;
-
-    background: var(--background);
+    background: var(--surface-soft);
 
     border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+}
 
-    color: var(--text-primary);
+.report-text {
+    margin: 0;
+
+    color: #333333;
 
     font-family:
-        "Courier New",
-        Courier,
+        "SFMono-Regular",
+        Consolas,
+        "Liberation Mono",
         monospace;
 
-    font-size: 0.9rem;
-    line-height: 1.6;
+    font-size: 13px;
+    line-height: 1.7;
 
     white-space: pre-wrap;
     overflow-wrap: anywhere;
 }
 
 
-/* =========================
-   Explanation Section
-   ========================= */
+/* =========================================================
+   Question
+   ========================================================= */
 
-.explanation-section {
-    margin-top: 2.5rem;
-    padding-top: 2rem;
-
-    border-top: 1px solid var(--border);
-}
-
-.explanation-section h2 {
-    margin-bottom: 0.5rem;
-}
-
-.section-description {
-    margin-bottom: 1.25rem;
-
-    color: var(--text-secondary);
-}
-
-
-/* =========================
-   Question Form
-   ========================= */
-
-#question-form {
-    margin-top: 1.25rem;
-}
-
-#question-form label {
+.input-label {
     display: block;
 
-    margin-bottom: 0.5rem;
+    margin-bottom: 7px;
 
+    font-size: 14px;
     font-weight: 600;
 }
 
-#question-input {
-    display: block;
-
+textarea {
     width: 100%;
-    min-height: 120px;
 
-    padding: 0.9rem 1rem;
+    min-height: 110px;
 
-    background: var(--surface);
-    color: var(--text-primary);
-
-    border: 1px solid var(--border);
-    border-radius: var(--radius-sm);
+    padding: 12px 13px;
 
     resize: vertical;
 
-    line-height: 1.5;
+    background: #ffffff;
 
-    transition:
-        border-color var(--transition),
-        box-shadow var(--transition);
-}
+    border: 1px solid var(--border-dark);
+    border-radius: 5px;
 
-#question-input::placeholder {
-    color: var(--text-muted);
-}
+    color: var(--text);
 
-#question-input:focus {
-    border-color: var(--border-focus);
-
-    box-shadow:
-        0 0 0 3px rgba(37, 99, 235, 0.1);
+    font-size: 14px;
+    line-height: 1.6;
 
     outline: none;
 }
 
-#explain-button {
-    width: 100%;
+textarea::placeholder {
+    color: #999999;
+}
+
+textarea:focus {
+    border-color: var(--primary);
+
+    box-shadow: 0 0 0 2px var(--primary-light);
+}
+
+.question-actions {
+    margin-top: 12px;
 }
 
 
-/* =========================
-   Explanation Result
-   ========================= */
-
-.explanation-result {
-    margin-top: 2rem;
-    padding-top: 2rem;
-
-    border-top: 1px solid var(--border);
-}
-
-.explanation-result > h2 {
-    margin-bottom: 1.25rem;
-}
-
-
-/* =========================
-   Explanation Content
-   ========================= */
+/* =========================================================
+   Explanation
+   ========================================================= */
 
 .explanation-answer {
-    color: var(--text-primary);
+    color: #303030;
 
-    font-size: 1rem;
+    font-size: 15px;
     line-height: 1.75;
 }
 
 .explanation-answer p {
-    margin: 0 0 1rem;
+    margin: 0 0 16px;
 }
 
 .explanation-answer p:last-child {
     margin-bottom: 0;
 }
 
-.explanation-answer h3,
-.explanation-answer h4 {
-    margin-top: 1.5rem;
-    margin-bottom: 0.75rem;
+.explanation-answer h1,
+.explanation-answer h2,
+.explanation-answer h3 {
+    margin: 24px 0 10px;
 
-    color: var(--text-primary);
+    color: var(--text);
 
     line-height: 1.35;
 }
 
-.explanation-answer h3 {
-    font-size: 1.2rem;
+.explanation-answer h1 {
+    font-size: 21px;
 }
 
-.explanation-answer h4 {
-    font-size: 1.05rem;
+.explanation-answer h2 {
+    font-size: 19px;
+}
+
+.explanation-answer h3 {
+    font-size: 17px;
+}
+
+.explanation-answer ul,
+.explanation-answer ol {
+    margin: 10px 0 18px;
+
+    padding-left: 24px;
+}
+
+.explanation-answer li {
+    margin-bottom: 6px;
 }
 
 .explanation-answer strong {
-    font-weight: 700;
-}
-
-.explanation-list {
-    margin: 0.5rem 0 1.25rem;
-    padding-left: 1.5rem;
-}
-
-.explanation-list li {
-    margin-bottom: 0.6rem;
-    padding-left: 0.25rem;
-}
-
-.explanation-list li:last-child {
-    margin-bottom: 0;
+    font-weight: 650;
 }
 
 
-/* =========================
-   Medical Sources
-   ========================= */
+/* =========================================================
+   Inline source references
+   ========================================================= */
 
-.sources-section {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
+.source-reference {
+    display: inline-block;
 
-    border-top: 1px solid var(--border);
-}
+    margin-left: 2px;
 
-.sources-section h3 {
-    margin-bottom: 0.75rem;
-
-    font-size: 1.1rem;
-}
-
-#source-list {
-    margin: 0;
-    padding-left: 1.5rem;
-}
-
-#source-list li {
-    margin-bottom: 0.65rem;
-
-    line-height: 1.5;
-}
-
-#source-list li:last-child {
-    margin-bottom: 0;
-}
-
-#source-list a {
     color: var(--primary);
 
-    font-weight: 600;
+    font-size: 12px;
+    font-weight: 650;
 
+    text-decoration: none;
+
+    vertical-align: super;
+}
+
+.source-reference:hover {
     text-decoration: underline;
-    text-underline-offset: 2px;
-}
-
-#source-list a:hover {
-    color: var(--primary-hover);
 }
 
 
-/* =========================
+/* =========================================================
+   Sources
+   ========================================================= */
+
+.sources-section {
+    background: var(--surface-soft);
+}
+
+.source-list {
+    margin: 0;
+
+    padding-left: 24px;
+}
+
+.source-list li {
+    margin-bottom: 14px;
+
+    padding-left: 4px;
+
+    color: var(--text-light);
+
+    font-size: 14px;
+}
+
+.source-list li:last-child {
+    margin-bottom: 0;
+}
+
+.source-list a {
+    color: var(--primary);
+
+    text-decoration: none;
+}
+
+.source-list a:hover {
+    text-decoration: underline;
+}
+
+.source-title {
+    display: block;
+
+    margin-bottom: 2px;
+
+    color: var(--text);
+
+    font-weight: 600;
+}
+
+.source-provider {
+    display: block;
+
+    color: var(--text-light);
+
+    font-size: 13px;
+}
+
+.source-url {
+    display: inline-block;
+
+    margin-top: 3px;
+
+    color: var(--primary);
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   Safety note
+   ========================================================= */
+
+.safety-note {
+    margin-top: 44px;
+
+    padding: 18px 20px;
+
+    background: var(--warning-bg);
+
+    border: 1px solid var(--warning-border);
+    border-radius: var(--radius);
+}
+
+.safety-note strong {
+    display: block;
+
+    margin-bottom: 5px;
+
+    font-size: 14px;
+}
+
+.safety-note p {
+    margin: 0;
+
+    color: #665f4d;
+
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
    Footer
-   ========================= */
+   ========================================================= */
 
 .site-footer {
-    margin-top: 2rem;
-    padding: 2rem 0;
+    padding: 24px 20px;
+
+    border-top: 1px solid var(--border);
 
     background: var(--surface);
 
-    border-top: 1px solid var(--border);
-
-    color: var(--text-secondary);
-
     text-align: center;
+}
 
-    font-size: 0.85rem;
+.site-footer p {
+    margin: 0;
+
+    color: var(--text-muted);
+
+    font-size: 12px;
 }
 
 
-/* =========================
+/* =========================================================
+   Hidden elements
+   ========================================================= */
+
+[hidden] {
+    display: none !important;
+}
+
+
+/* =========================================================
    Responsive
-   ========================= */
+   ========================================================= */
 
 @media (max-width: 700px) {
-    .hero {
-        padding: 3.5rem 0 2.5rem;
+
+    .header-inner,
+    .main-container {
+        width: min(100% - 28px, var(--content-width));
     }
 
-    .hero h1 {
-        font-size: 2.25rem;
+    .main-container {
+        padding-top: 36px;
+        padding-bottom: 50px;
     }
 
-    .hero-description {
-        font-size: 1rem;
+    .intro {
+        margin-bottom: 34px;
     }
 
-    .upload-card,
-    .result-card {
-        padding: 1.5rem;
+    .intro h1 {
+        font-size: 28px;
     }
 
-    .result-section {
-        padding-bottom: 3rem;
+    .intro p {
+        font-size: 15px;
     }
 
-    .explanation-answer {
-        font-size: 0.98rem;
-        line-height: 1.7;
+    .section-block {
+        padding: 20px;
+        margin-bottom: 24px;
+    }
+
+    .report-heading {
+        flex-direction: column;
+        gap: 8px;
+    }
+
+    .page-count {
+        align-self: flex-start;
+    }
+
+    .upload-area {
+        padding: 28px 18px;
     }
 }
 
 
-@media (max-width: 480px) {
-    .container {
-        width: min(
-            calc(100% - 1.25rem),
-            var(--container-width)
-        );
+@media (max-width: 420px) {
+
+    .header-inner,
+    .main-container {
+        width: calc(100% - 24px);
     }
 
     .site-header {
-        padding: 1rem 0;
+        height: 58px;
     }
 
-    .logo {
-        font-size: 1.35rem;
+    .brand-name {
+        font-size: 18px;
     }
 
-    .hero {
-        padding: 2.75rem 0 2rem;
+    .study-label {
+        font-size: 12px;
     }
 
-    .hero h1 {
-        font-size: 2rem;
+    .main-container {
+        padding-top: 28px;
     }
 
-    .upload-card,
-    .result-card {
-        padding: 1.25rem;
-        border-radius: var(--radius-sm);
+    .intro h1 {
+        font-size: 25px;
     }
 
-    .result-card h2 {
-        font-size: 1.4rem;
+    .section-block {
+        padding: 17px;
     }
 
-    #report-text {
-        max-height: 320px;
-        padding: 0.85rem;
-
-        font-size: 0.82rem;
+    .primary-button {
+        width: 100%;
     }
 
-    .file-label,
-    button {
+    .question-actions {
         width: 100%;
     }
 }
 
 
-/* =========================
-   Reduced Motion
-   ========================= */
+/* =========================================================
+   Reduced motion
+   ========================================================= */
 
 @media (prefers-reduced-motion: reduce) {
+
     html {
         scroll-behavior: auto;
     }
@@ -717,4 +793,21 @@ button:disabled {
     *::after {
         transition: none !important;
     }
+}
+/* =========================================================
+   Footer article link
+   ========================================================= */
+
+.footer-article-link {
+    margin-top: 6px !important;
+}
+
+.footer-article-link a {
+    color: var(--primary);
+    text-decoration: none;
+    font-weight: 500;
+}
+
+.footer-article-link a:hover {
+    text-decoration: underline;
 }
